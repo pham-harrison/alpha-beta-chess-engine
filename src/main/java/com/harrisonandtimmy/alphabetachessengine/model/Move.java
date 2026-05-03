@@ -1,5 +1,7 @@
 package com.harrisonandtimmy.alphabetachessengine.model;
 
+import com.harrisonandtimmy.alphabetachessengine.model.piece.Piece;
+
 public class Move {
   private final Square from;
   private final Square to;
