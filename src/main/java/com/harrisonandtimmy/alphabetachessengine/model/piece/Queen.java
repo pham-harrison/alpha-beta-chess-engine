@@ -8,11 +8,11 @@ import com.harrisonandtimmy.alphabetachessengine.model.Square;
 import java.util.ArrayList;
 import java.util.List;
 
-public class Bishop extends Piece{
+public class Queen extends Piece{
 
 
-    public Bishop(Color color) {
-        super(color, PieceType.BISHOP);
+    public Queen(Color color) {
+        super(color, PieceType.QUEEN);
     }
 
     @Override
@@ -23,7 +23,11 @@ public class Bishop extends Piece{
                 {1, 1},
                 {1, -1},
                 {-1, -1},
-                {-1, 1}
+                {-1, 1},
+                {1,0},
+                {-1,0},
+                {0, 1},
+                {0, -1}
         };
 
         for (int[] direction : directions) {
