@@ -1,0 +1,4 @@
+
+fix king - cant castle into check, castling, cant walk into checks
+
+fix pawn promotion - promotion, en passant
