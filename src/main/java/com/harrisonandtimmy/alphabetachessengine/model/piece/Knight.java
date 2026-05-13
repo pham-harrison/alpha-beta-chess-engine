@@ -1,9 +1,20 @@
 package com.harrisonandtimmy.alphabetachessengine.model.piece;
 
-public class Knight {
+import com.harrisonandtimmy.alphabetachessengine.model.Board;
+import com.harrisonandtimmy.alphabetachessengine.model.Color;
+import com.harrisonandtimmy.alphabetachessengine.model.Move;
+import com.harrisonandtimmy.alphabetachessengine.model.PieceType;
+import com.harrisonandtimmy.alphabetachessengine.model.Square;
+
+import java.util.ArrayList;
+import java.util.List;
+
+public class Knight extends Piece {
+
     public Knight(Color color) {
         super(color, PieceType.KNIGHT);
     }
+
     @Override
     public List<Move> getValidMoves(Board board, Square from) {
         List<Move> moves = new ArrayList<>();
