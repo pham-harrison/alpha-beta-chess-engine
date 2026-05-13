@@ -1,5 +1,6 @@
 package com.harrisonandtimmy.alphabetachessengine.model.piece;
 
+import com.harrisonandtimmy.alphabetachessengine.model.Board;
 import com.harrisonandtimmy.alphabetachessengine.model.Color;
 import com.harrisonandtimmy.alphabetachessengine.model.Move;
 import com.harrisonandtimmy.alphabetachessengine.model.PieceType;

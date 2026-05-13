@@ -1,5 +1,15 @@
 package com.harrisonandtimmy.alphabetachessengine.model.piece;
 
+import com.harrisonandtimmy.alphabetachessengine.model.Board;
+import com.harrisonandtimmy.alphabetachessengine.model.Color;
+import com.harrisonandtimmy.alphabetachessengine.model.Move;
+import com.harrisonandtimmy.alphabetachessengine.model.PieceType;
+import com.harrisonandtimmy.alphabetachessengine.model.Square;
+
+import java.util.ArrayList;
+import java.util.List;
+
+
 public class Pawn extends Piece {
     public Pawn(Color color) {
         super(color, PieceType.PAWN);
