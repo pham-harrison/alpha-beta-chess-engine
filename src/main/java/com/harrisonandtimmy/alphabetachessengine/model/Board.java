@@ -20,8 +20,8 @@ public class Board {
   Board() — constructor, creates the grid and calls initializeBoard()
   initializeBoard() — places all pieces in their starting positions on the grid
   getPiece(Square) — returns whatever piece is at that square, or null if empty
-  setPiece(Square, Piece) — places a piece at a square
-  removePiece(Square) — sets a square to null
+  ~   setPiece(Square, Piece) — places a piece at a square
+  ~   removePiece(Square) — sets a square to null
   applyMove(Move) — moves a piece from one square to another, handles auto-promotion
   undoMove(Move) — reverses a move, restores captured piece if there was one
   getAllValidMoves(Color) — loops over every square, finds all pieces of that color, collects all their valid moves into one list
@@ -31,4 +31,20 @@ public class Board {
   findKing(Color) — scans the grid to find the king of a given color, returns its square. Used by isInCheck()
   toString() — prints the board to the terminal
   */
+}
+public void setPiece(Square square, Piece piece) {
+  if (square.isOnBoard()) {
+    grid[square.getRow()][square.getCol()] = piece;
+    // If we are placing an actual piece (not null),
+    // tell the piece its new location.
+    if (piece != null) {
+      piece.setSquare(square);
+    }
+  }
+}
+
+public void removePiece(Square square) {
+  if (square.isOnBoard()) {
+    grid[square.getRow()][square.getCol()] = null;
+  }
 }
