@@ -7,12 +7,20 @@ public class Move {
   private final Square to;
   private final Piece piece;
   private final Piece capturedPiece;
+  private final boolean isPromotion;
 
-  public Move(Square from, Square to, Piece piece, Piece capturedPiece) {
+  // Full constructor
+  public Move(Square from, Square to, Piece piece, Piece capturedPiece, boolean isPromotion) {
     this.from = from;
     this.to = to;
     this.piece = piece;
     this.capturedPiece = capturedPiece;
+    this.isPromotion = isPromotion;
+  }
+
+  // Convenience constructor — defaults isPromotion to false
+  public Move(Square from, Square to, Piece piece, Piece capturedPiece) {
+    this(from, to, piece, capturedPiece, false);
   }
 
   public Square getFrom() {
@@ -29,6 +37,10 @@ public class Move {
 
   public Piece getCapturedPiece() {
     return this.capturedPiece;
+  }
+
+  public boolean isPromotion() {
+    return this.isPromotion;
   }
 
   @Override
