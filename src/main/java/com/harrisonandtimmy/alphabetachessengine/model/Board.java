@@ -13,9 +13,11 @@ import java.util.List;
 
 public class Board {
   private Piece[][] grid;
-  //Constructor
+  private Move lastMove;   // tracked for en passant
+
   public Board() {
     grid = new Piece[8][8];
+    lastMove = null;
     initializeBoard();
   }
 
@@ -23,11 +25,6 @@ public class Board {
   // Board setup
   // -------------------------------------------------------------------------
 
-  /**
-   * Places all 32 pieces in their standard chess starting positions.
-   * Row 0 = rank 8 (Black back rank)
-   * Row 7 = rank 1 (White back rank)
-   */
   private void initializeBoard() {
     // --- Black back rank (row 0) ---
     setPiece(new Square(0, 0), new Rook(Color.BLACK));
@@ -43,9 +40,6 @@ public class Board {
     for (int col = 0; col < 8; col++) {
       setPiece(new Square(1, col), new Pawn(Color.BLACK));
     }
-
-    // --- Empty rows 2–5 ---
-    // grid is already null-initialized, nothing to do.
 
     // --- White pawns (row 6) ---
     for (int col = 0; col < 8; col++) {
@@ -67,61 +61,120 @@ public class Board {
   // Basic grid access
   // -------------------------------------------------------------------------
 
-  /** Returns the piece at the given square, or null if the square is empty. */
   public Piece getPiece(Square square) {
     return grid[square.getRow()][square.getCol()];
   }
 
-  /** Places a piece (or null) at the given square. Updates the piece's stored square. */
   public void setPiece(Square square, Piece piece) {
     if (square.isOnBoard()) {
       grid[square.getRow()][square.getCol()] = piece;
     }
   }
 
-  /** Clears the given square (sets it to null). */
   public void removePiece(Square square) {
     if (square.isOnBoard()) {
       grid[square.getRow()][square.getCol()] = null;
     }
   }
 
+  public Move getLastMove() {
+    return lastMove;
+  }
+
   // -------------------------------------------------------------------------
   // Move application / undo
   // -------------------------------------------------------------------------
 
-
   public void applyMove(Move move) {
+    Piece piece = move.getPiece();
     removePiece(move.getFrom());
+
     if (move.isPromotion()) {
-      setPiece(move.getTo(), new Queen(move.getPiece().getColor()));
+      setPiece(move.getTo(), new Queen(piece.getColor()));
     } else {
-      setPiece(move.getTo(), move.getPiece());
+      setPiece(move.getTo(), piece);
     }
+
+    // Set hasMoved flags
+    if (piece instanceof King) {
+      ((King) piece).setHasMoved(true);
+    }
+    if (piece instanceof Rook) {
+      ((Rook) piece).setHasMoved(true);
+    }
+
+    // Move the rook too if castling
+    if (move.isCastling()) {
+      int row = move.getTo().getRow();
+      boolean kingside = move.getTo().getCol() == 6;
+      if (kingside) {
+        Piece rook = getPiece(new Square(row, 7));
+        removePiece(new Square(row, 7));
+        setPiece(new Square(row, 5), rook);
+      } else {
+        Piece rook = getPiece(new Square(row, 0));
+        removePiece(new Square(row, 0));
+        setPiece(new Square(row, 3), rook);
+      }
+    }
+
+    // Remove the captured pawn if en passant
+    // The captured pawn is beside the landing square, not on it
+    if (move.isEnPassant()) {
+      int capturedPawnRow = move.getFrom().getRow();         // same row as the capturing pawn
+      int capturedPawnCol = move.getTo().getCol();           // same col as where we land
+      removePiece(new Square(capturedPawnRow, capturedPawnCol));
+    }
+
+    lastMove = move;
   }
 
-  /**
-   * Reverses a move, restoring any captured piece to its original square.
-   */
   public void undoMove(Move move) {
-    Square from          = move.getFrom();
-    Square to            = move.getTo();
-    Piece  piece         = move.getPiece();
-    Piece  capturedPiece = move.getCapturedPiece();
+    Piece piece = move.getPiece();
 
-    setPiece(from, piece);
-    // Restore the captured piece (or null if the square was empty).
-    setPiece(to, capturedPiece);
+    // Put piece back, restore whatever was on destination
+    setPiece(move.getFrom(), piece);
+    setPiece(move.getTo(), move.getCapturedPiece());
+
+    // Restore hasMoved to what it was before this move
+    if (piece instanceof King) {
+      ((King) piece).setHasMoved(move.pieceHadMoved());
+    }
+    if (piece instanceof Rook) {
+      ((Rook) piece).setHasMoved(move.pieceHadMoved());
+    }
+
+    // Move rook back if castling, rook was always false before castling
+    if (move.isCastling()) {
+      int row = move.getTo().getRow();
+      boolean kingside = move.getTo().getCol() == 6;
+      if (kingside) {
+        Piece rook = getPiece(new Square(row, 5));
+        removePiece(new Square(row, 5));
+        setPiece(new Square(row, 7), rook);
+        ((Rook) rook).setHasMoved(false);
+      } else {
+        Piece rook = getPiece(new Square(row, 3));
+        removePiece(new Square(row, 3));
+        setPiece(new Square(row, 0), rook);
+        ((Rook) rook).setHasMoved(false);
+      }
+    }
+
+    // Restore captured pawn if en passant
+    if (move.isEnPassant()) {
+      int capturedPawnRow = move.getFrom().getRow();
+      int capturedPawnCol = move.getTo().getCol();
+      setPiece(new Square(capturedPawnRow, capturedPawnCol), move.getCapturedPiece());
+    }
+
+    lastMove = null;
   }
 
   // -------------------------------------------------------------------------
   // Move generation
   // -------------------------------------------------------------------------
 
-  /**
-   * Collects every pseudo-legal move for the given color by asking each
-   * piece for its valid moves. Does NOT filter for legality (king safety).
-   */
   public List<Move> getAllValidMoves(Color color) {
     List<Move> moves = new ArrayList<>();
     for (int row = 0; row < 8; row++) {
@@ -136,10 +189,6 @@ public class Board {
     return moves;
   }
 
-  /**
-   * Returns only the truly legal moves for the given color:
-   * every pseudo-legal move that does NOT leave the friendly king in check.
-   */
   public List<Move> getLegalMoves(Color color) {
     List<Move> allMoves   = getAllValidMoves(color);
     List<Move> legalMoves = new ArrayList<>();
@@ -150,6 +199,7 @@ public class Board {
     }
     return legalMoves;
   }
+
   public boolean isCheckmate(Color color) {
     return isInCheck(color) && getLegalMoves(color).isEmpty();
   }
@@ -157,10 +207,7 @@ public class Board {
   public boolean isStalemate(Color color) {
     return !isInCheck(color) && getLegalMoves(color).isEmpty();
   }
-  /**
-   * Applies the move temporarily, checks whether the moving side's king
-   * is in check, then undoes the move. Returns true if the position is safe.
-   */
+
   public boolean isLegalMove(Move move) {
     applyMove(move);
     boolean leavesKingInCheck = isInCheck(move.getPiece().getColor());
@@ -172,17 +219,11 @@ public class Board {
   // King safety
   // -------------------------------------------------------------------------
 
-  /**
-   * Returns true if the king of the given color is currently attacked by
-   * any enemy piece.
-   */
   public boolean isInCheck(Color color) {
     Square kingSquare = findKing(color);
     if (kingSquare == null) {
-      // Should never happen in a legal game, but guard anyway.
       return false;
     }
-
     Color opponent = color.getOpposite();
     List<Move> opponentMoves = getAllValidMoves(opponent);
     for (Move move : opponentMoves) {
@@ -193,10 +234,17 @@ public class Board {
     return false;
   }
 
-  /**
-   * Scans the board and returns the square occupied by the king of the
-   * given color. Returns null if the king is not found.
-   */
+  public boolean isSquareAttacked(Square square, Color friendlyColor) {
+    Color opponent = friendlyColor.getOpposite();
+    List<Move> opponentMoves = getAllValidMoves(opponent);
+    for (Move move : opponentMoves) {
+      if (move.getTo().equals(square)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   public Square findKing(Color color) {
     for (int row = 0; row < 8; row++) {
       for (int col = 0; col < 8; col++) {
@@ -215,10 +263,6 @@ public class Board {
   // Debug / display
   // -------------------------------------------------------------------------
 
-  /**
-   * Prints an 8×8 ASCII representation of the board to stdout.
-   * Upper-case letters = White, lower-case = Black, '.' = empty.
-   */
   @Override
   public String toString() {
     StringBuilder sb = new StringBuilder();
@@ -240,7 +284,6 @@ public class Board {
     return sb.toString();
   }
 
-  /** Maps a piece to a single display character (upper = White, lower = Black). */
   private char pieceSymbol(Piece piece) {
     char symbol = switch (piece.getType()) {
       case KING   -> 'K';
@@ -253,21 +296,3 @@ public class Board {
     return piece.getColor() == Color.BLACK ? Character.toLowerCase(symbol) : symbol;
   }
 }
-
- /*
-  This is what Claude recommends for this class
-
-  Board() — constructor, creates the grid and calls initializeBoard()
-  initializeBoard() — places all pieces in their starting positions on the grid
-  getPiece(Square) — returns whatever piece is at that square, or null if empty
-  ~   setPiece(Square, Piece) — places a piece at a square
-  ~   removePiece(Square) — sets a square to null
-  applyMove(Move) — moves a piece from one square to another, handles auto-promotion
-  undoMove(Move) — reverses a move, restores captured piece if there was one
-  getAllValidMoves(Color) — loops over every square, finds all pieces of that color, collects all their valid moves into one list
-  isInCheck(Color) — checks if the king of that color is currently being attacked by any enemy piece
-  isLegalMove(Move) — applies a move, checks if own king is in check afterward, undoes the move, returns true or false. This is how you filter out moves that would leave your king exposed
-  getLegalMoves(Color) — calls getAllValidMoves() then filters each one through isLegalMove(), returns only truly legal moves
-  findKing(Color) — scans the grid to find the king of a given color, returns its square. Used by isInCheck()
-  toString() — prints the board to the terminal
-  */

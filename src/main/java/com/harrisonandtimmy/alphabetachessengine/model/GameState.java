@@ -1,22 +1,85 @@
 package com.harrisonandtimmy.alphabetachessengine.model;
 
+import java.util.ArrayList;
+import java.util.List;
+import com.harrisonandtimmy.alphabetachessengine.model.piece.Piece;
+
 public class GameState {
+
+    private final Board board;
+    private Color currentTurn;
+    private final List<Move> moveHistory;
+    private boolean isCheck;
+    private boolean isCheckmate;
+    private boolean isStalemate;
+
+    public GameState() {
+        board = new Board();
+        currentTurn = Color.WHITE;
+        moveHistory = new ArrayList<>();
+        isCheck = false;
+        isCheckmate = false;
+        isStalemate = false;
+    }
+
+    public boolean applyMove(Square from, Square to) {
+        Piece piece = board.getPiece(from);
+
+        if (piece == null || piece.getColor() != currentTurn) {
+            return false;
+        }
+
+        List<Move> legalMoves = board.getLegalMoves(currentTurn);
+        Move matchedMove = null;
+        for (Move move : legalMoves) {
+            if (move.getFrom().equals(from) && move.getTo().equals(to)) {
+                matchedMove = move;
+                break;
+            }
+        }
+
+        if (matchedMove == null) {
+            return false;
+        }
+
+        board.applyMove(matchedMove);
+        moveHistory.add(matchedMove);
+        currentTurn = currentTurn.getOpposite();
+        updateStatus();
+        return true;
+    }
+
+    private void updateStatus() {
+        isCheck     = board.isInCheck(currentTurn);
+        isCheckmate = board.isCheckmate(currentTurn);
+        isStalemate = board.isStalemate(currentTurn);
+    }
+
+    public boolean isGameOver() {
+        return isCheckmate || isStalemate;
+    }
+
+    public Board getBoard() {
+        return board;
+    }
+
+    public Color getCurrentTurn() {
+        return currentTurn;
+    }
+
+    public List<Move> getMoveHistory() {
+        return moveHistory;
+    }
+
+    public boolean isCheck() {
+        return isCheck;
+    }
+
+    public boolean isCheckmate() {
+        return isCheckmate;
+    }
+
+    public boolean isStalemate() {
+        return isStalemate;
+    }
 }
-
-/*
- The referee of the game. Wraps the board and enforces all the rules:
- whose turn it is, whether a move is legal in the context of the game,
- and whether the game is over.
-
-GameState() — constructor, creates a new Board, sets currentTurn to WHITE, initializes empty move history, sets check/checkmate/stalemate to false
-applyMove(Square from, Square to) — validates the piece belongs to the current player, checks the move is legal, applies it to the board, records it in history, switches turns, calls updateStatus, returns true if successful false if not
-updateStatus() — called after every move, checks if the new current player is in check, checks if they have any legal moves, sets isCheck/isCheckmate/isStalemate accordingly
-isGameOver() — returns true if isCheckmate or isStalemate
-getBoard() — returns the board
-getCurrentTurn() — returns whose turn it is
-getMoveHistory() — returns the list of moves made
-isCheck() — returns whether the current player is in check
-isCheckmate() — returns whether the game is over by checkmate
-isStalemate() — returns whether the game is over by stalemate
-
- */
