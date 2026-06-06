@@ -10,9 +10,18 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class Rook extends Piece {
+  private boolean hasMoved = false;
 
   public Rook(Color color) {
     super(color, PieceType.ROOK);
+  }
+
+  public boolean hasMoved() {
+    return hasMoved;
+  }
+
+  public void setHasMoved(boolean hasMoved) {
+    this.hasMoved = hasMoved;
   }
 
   @Override
@@ -34,13 +43,14 @@ public class Rook extends Piece {
       while (nextSquare.isOnBoard()) {
         Piece occupant = board.getPiece(nextSquare);
 
-        Move move;
         if (occupant == null) {
-          move = new Move(from, nextSquare, this, null);
-          moves.add(move);
+          moves.add(new Move(from, nextSquare, this, null,
+                  false, false, false,
+                  this.hasMoved()));  // snapshot rook's current hasMoved
         } else if (occupant.getColor() != this.getColor()) {
-          move = new Move(from, nextSquare, this, occupant);
-          moves.add(move);
+          moves.add(new Move(from, nextSquare, this, occupant,
+                  false, false, false,
+                  this.hasMoved()));  // snapshot rook's current hasMoved
           break;
         } else {
           break;
