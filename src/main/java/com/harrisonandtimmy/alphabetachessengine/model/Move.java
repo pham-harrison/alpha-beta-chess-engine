@@ -8,40 +8,48 @@ public class Move {
   private final Piece piece;
   private final Piece capturedPiece;
   private final boolean isPromotion;
+  private final boolean isCastling;
+  private final boolean isEnPassant;
+  private final boolean pieceHadMoved;
 
   // Full constructor
-  public Move(Square from, Square to, Piece piece, Piece capturedPiece, boolean isPromotion) {
+  public Move(Square from, Square to, Piece piece, Piece capturedPiece,
+              boolean isPromotion, boolean isCastling, boolean isEnPassant,
+              boolean pieceHadMoved) {
     this.from = from;
     this.to = to;
     this.piece = piece;
     this.capturedPiece = capturedPiece;
     this.isPromotion = isPromotion;
+    this.isCastling = isCastling;
+    this.isEnPassant = isEnPassant;
+    this.pieceHadMoved = pieceHadMoved;
   }
 
-  // Convenience constructor — defaults isPromotion to false
+  // Convenience constructor — used by most pieces
   public Move(Square from, Square to, Piece piece, Piece capturedPiece) {
-    this(from, to, piece, capturedPiece, false);
+    this(from, to, piece, capturedPiece, false, false, false, false);
   }
 
-  public Square getFrom() {
-    return this.from;
+  // Promotion constructor — used by Pawn
+  public Move(Square from, Square to, Piece piece, Piece capturedPiece, boolean isPromotion) {
+    this(from, to, piece, capturedPiece, isPromotion, false, false, false);
   }
 
-  public Square getTo() {
-    return this.to;
+  // En passant constructor — used by Pawn
+  public Move(Square from, Square to, Piece piece, Piece capturedPiece,
+              boolean isPromotion, boolean isCastling, boolean isEnPassant) {
+    this(from, to, piece, capturedPiece, isPromotion, isCastling, isEnPassant, false);
   }
 
-  public Piece getPiece() {
-    return this.piece;
-  }
-
-  public Piece getCapturedPiece() {
-    return this.capturedPiece;
-  }
-
-  public boolean isPromotion() {
-    return this.isPromotion;
-  }
+  public Square getFrom() { return this.from; }
+  public Square getTo() { return this.to; }
+  public Piece getPiece() { return this.piece; }
+  public Piece getCapturedPiece() { return this.capturedPiece; }
+  public boolean isPromotion() { return this.isPromotion; }
+  public boolean isCastling() { return this.isCastling; }
+  public boolean isEnPassant() { return this.isEnPassant; }
+  public boolean pieceHadMoved() { return this.pieceHadMoved; }
 
   @Override
   public String toString() {
