@@ -15,6 +15,6 @@ public enum PieceType {
   }
 
   public int getValue() {
-    return value;
+    return this.value;
   }
 }
