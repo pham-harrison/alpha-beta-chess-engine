@@ -1,8 +1,11 @@
 package com.harrisonandtimmy.alphabetachessengine.cli;
 
+import com.harrisonandtimmy.alphabetachessengine.ai.AIStrategy;
+import com.harrisonandtimmy.alphabetachessengine.ai.AlphaBetaStrategy;
 import com.harrisonandtimmy.alphabetachessengine.model.Color;
 import com.harrisonandtimmy.alphabetachessengine.model.GameState;
 import com.harrisonandtimmy.alphabetachessengine.model.Square;
+import com.harrisonandtimmy.alphabetachessengine.model.Move;
 
 import java.util.Scanner;
 
@@ -12,7 +15,37 @@ public class ChessCLI {
         GameState gameState = new GameState();
         Scanner scanner = new Scanner(System.in);
 
-        System.out.println("Welcome to Alpha-Beta Chess Engine!");
+        System.out.println("Welcome to Alpha-Beta Chess Engine!\n");
+
+        // Ask for game mode
+        System.out.println("Select game mode:");
+        System.out.println("1. Two players");
+        System.out.println("2. Play against AI");
+        System.out.println("Enter 1 or 2: ");
+        String modelInput = scanner.nextLine().trim();
+
+        boolean vsAI = modelInput.equals("2");
+        Color aiColor = null;
+        AIStrategy ai = null;
+
+        if (vsAI) {
+            System.out.println("What do you want to play as? (white/black):");
+
+            while (aiColor == null) {
+                String colorInput = scanner.nextLine().trim().toLowerCase();
+                if (colorInput.equals("white") || colorInput.equals("w")) {
+                    aiColor = Color.BLACK;
+                } else if (colorInput.equals("black") || colorInput.equals("b")) {
+                    aiColor = Color.WHITE;
+                } else {
+                    System.out.println("Invalid input. Enter 'white' or 'black':");
+                }
+            }
+
+            ai = new AlphaBetaStrategy();
+            System.out.println("AI will play as " + aiColor + "\n");
+        }
+
         System.out.println("Enter moves as: e2 e4");
         System.out.println("Type 'quit' to exit\n");
 
@@ -28,6 +61,13 @@ public class ChessCLI {
                 System.out.print(" — CHECK!");
             }
             System.out.println();
+
+            if (vsAI && gameState.getCurrentTurn() == aiColor) {
+                System.out.println("AI is thinking...");
+                Move move = ai.getNextMove(gameState);
+                gameState.applyMove(move.getFrom(), move.getTo());
+                continue;
+            }
 
             // Read input
             System.out.print("Enter move: ");
