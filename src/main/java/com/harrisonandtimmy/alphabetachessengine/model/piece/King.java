@@ -28,7 +28,7 @@ public class King extends Piece {
     public List<Move> getValidMoves(Board board, Square from) {
         List<Move> moves = new ArrayList<>();
 
-        // Normal king moves
+        // 1. Normal king moves
         int[][] directions = {
                 {1, 1}, {1, -1}, {-1, -1}, {-1, 1},
                 {1, 0}, {-1, 0}, {0, 1}, {0, -1}
@@ -47,8 +47,8 @@ public class King extends Piece {
             }
         }
 
-        // Castling — only if king hasn't moved and isn't in check
-        if (!hasMoved && !board.isInCheck(getColor())) {
+        // 2. Castling — Safely guarded against infinite recursion loops
+        if (!hasMoved && !isEvaluatingAttacks()) {
             int row = from.getRow();
 
             // Kingside
@@ -57,10 +57,11 @@ public class King extends Piece {
                 if (board.getPiece(new Square(row, 5)) == null &&
                         board.getPiece(new Square(row, 6)) == null &&
                         !board.isSquareAttacked(new Square(row, 5), getColor()) &&
-                        !board.isSquareAttacked(new Square(row, 6), getColor())) {
+                        !board.isSquareAttacked(new Square(row, 6), getColor()) &&
+                        !board.isInCheck(getColor())) { // Keep check status validation last
                     moves.add(new Move(from, new Square(row, 6), this, null,
                             false, true, false,
-                            this.hasMoved()));  // always false, castling requires it
+                            this.hasMoved()));
                 }
             }
 
@@ -71,14 +72,34 @@ public class King extends Piece {
                         board.getPiece(new Square(row, 2)) == null &&
                         board.getPiece(new Square(row, 3)) == null &&
                         !board.isSquareAttacked(new Square(row, 2), getColor()) &&
-                        !board.isSquareAttacked(new Square(row, 3), getColor())) {
+                        !board.isSquareAttacked(new Square(row, 3), getColor()) &&
+                        !board.isInCheck(getColor())) { // Keep check status validation last
                     moves.add(new Move(from, new Square(row, 2), this, null,
                             false, true, false,
-                            this.hasMoved()));  // always false, castling requires it
+                            this.hasMoved()));
                 }
             }
         }
 
         return moves;
+    }
+
+    /**
+     * Inspects the program stack trace to see if this method was triggered by an attack-checking
+     * routine. If it was, we flag it to shut down castling validation and break the recursion loop.
+     */
+    private boolean isEvaluatingAttacks() {
+        StackTraceElement[] stackTrace = Thread.currentThread().getStackTrace();
+        int count = 0;
+        for (StackTraceElement element : stackTrace) {
+            if (element.getMethodName().equals("isInCheck") ||
+                    element.getMethodName().equals("isSquareAttacked")) {
+                count++;
+                if (count > 1) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 }
